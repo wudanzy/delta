@@ -42,6 +42,7 @@ import org.apache.hadoop.fs.{FileStatus, Path}
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{Column, Encoder, SparkSession}
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.sql.catalyst.expressions.Literal
@@ -982,6 +983,7 @@ case class Metadata(
     format: Format = Format(),
     schemaString: String = null,
     partitionColumns: Seq[String] = Nil,
+    bucketSpec: Option[BucketSpec] = None,
     configuration: Map[String, String] = Map.empty,
     @JsonDeserialize(contentAs = classOf[java.lang.Long])
     createdTime: Option[Long] = None) extends Action with AbstractMetadata {

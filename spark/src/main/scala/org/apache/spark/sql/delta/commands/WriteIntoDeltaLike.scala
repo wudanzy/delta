@@ -28,10 +28,10 @@ import org.apache.spark.sql.delta.constraints.Constraint
 import org.apache.spark.sql.delta.constraints.Constraints.Check
 import org.apache.spark.sql.delta.constraints.Invariants.ArbitraryExpression
 import org.apache.spark.sql.delta.sources.DeltaSQLConf
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.Expression
 import org.apache.spark.sql.execution.metric.{SQLMetric, SQLMetrics}
 import org.apache.spark.sql.types.StructType
@@ -63,6 +63,7 @@ trait WriteIntoDeltaLike {
       txn: OptimisticTransaction,
       sparkSession: SparkSession,
       clusterBySpecOpt: Option[ClusterBySpec] = None,
+      bucketSpec: Option[BucketSpec],
       isTableReplace: Boolean = false): TaggedCommitData[Action]
 
   def write(
@@ -70,7 +71,7 @@ trait WriteIntoDeltaLike {
       sparkSession: SparkSession,
       clusterBySpecOpt: Option[ClusterBySpec] = None,
       isTableReplace: Boolean = false): Seq[Action] = writeAndReturnCommitData(
-    txn, sparkSession, clusterBySpecOpt, isTableReplace).actions
+    txn, sparkSession, clusterBySpecOpt, None, isTableReplace).actions
 
   val deltaLog: DeltaLog
 

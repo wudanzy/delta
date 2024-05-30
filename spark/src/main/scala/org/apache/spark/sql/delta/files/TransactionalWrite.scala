@@ -34,6 +34,7 @@ import org.apache.spark.sql.delta.stats.{
 }
 import org.apache.hadoop.fs.Path
 
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
@@ -235,6 +236,13 @@ trait TransactionalWrite extends DeltaLogging { self: OptimisticTransactionImpl 
     writeFiles(data, writeOptions, Nil)
   }
 
+  def writeFiles(
+      data: Dataset[_],
+      writeOptions: Option[DeltaOptions],
+      bucketSpec: Option[BucketSpec]): Seq[FileAction] = {
+    writeFiles(data, writeOptions, bucketSpec, isOptimize = false, Nil)
+  }
+
   def writeFiles(data: Dataset[_]): Seq[FileAction] = {
     writeFiles(data, Nil)
   }
@@ -243,7 +251,7 @@ trait TransactionalWrite extends DeltaLogging { self: OptimisticTransactionImpl 
       data: Dataset[_],
       deltaOptions: Option[DeltaOptions],
       additionalConstraints: Seq[Constraint]): Seq[FileAction] = {
-    writeFiles(data, deltaOptions, isOptimize = false, additionalConstraints)
+    writeFiles(data, deltaOptions, None, isOptimize = false, additionalConstraints)
   }
 
   /**
@@ -365,12 +373,14 @@ trait TransactionalWrite extends DeltaLogging { self: OptimisticTransactionImpl 
    *
    * @param inputData Data to write out.
    * @param writeOptions Options to decide how to write out the data.
+   * @param bucketSpec The bucketSpec for writing the files.
    * @param isOptimize Whether the operation writing this is Optimize or not.
    * @param additionalConstraints Additional constraints on the write.
    */
   def writeFiles(
       inputData: Dataset[_],
       writeOptions: Option[DeltaOptions],
+      bucketSpec: Option[BucketSpec],
       isOptimize: Boolean,
       additionalConstraints: Seq[Constraint]): Seq[FileAction] = {
     hasWritten = true
@@ -448,7 +458,7 @@ trait TransactionalWrite extends DeltaLogging { self: OptimisticTransactionImpl 
             spark.sessionState.newHadoopConfWithOptions(metadata.configuration ++ deltaLog.options),
           // scalastyle:on deltahadoopconfiguration
           partitionColumns = partitioningColumns,
-          bucketSpec = None,
+          bucketSpec = bucketSpec,
           statsTrackers = optionalStatsTracker.toSeq
             ++ statsTrackers,
           options = options)

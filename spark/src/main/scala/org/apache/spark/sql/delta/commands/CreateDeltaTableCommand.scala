@@ -242,6 +242,7 @@ case class CreateDeltaTableCommand(
         txn,
         sparkSession,
         ClusteredTableUtils.getClusterBySpecOptional(table),
+        tableWithLocation.bucketSpec,
         // Pass this option to the writer so that it can differentiate between an INSERT and a
         // REPLACE command. This is needed because the writer is shared between the two commands.
         // But some options, such as dynamic partition overwrite, are only valid for INSERT.

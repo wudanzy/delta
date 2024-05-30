@@ -23,8 +23,8 @@ import org.apache.spark.sql.delta.actions.{DomainMetadata, Metadata, Protocol}
 import org.apache.spark.sql.delta.constraints.Constraints
 import org.apache.spark.sql.delta.metering.DeltaLogging
 import org.apache.spark.sql.delta.util.PartitionUtils
-
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.FileSourceGeneratedMetadataStructField
 import org.apache.spark.sql.catalyst.types.DataTypeUtils.toAttributes
 import org.apache.spark.sql.types.StructType
@@ -68,6 +68,7 @@ trait ImplicitMetadataOperation extends DeltaLogging {
       txn: OptimisticTransaction,
       schema: StructType,
       partitionColumns: Seq[String],
+      bucketSpec: Option[BucketSpec],
       configuration: Map[String, String],
       isOverwriteMode: Boolean,
       rearrangeOnly: Boolean
@@ -113,8 +114,8 @@ trait ImplicitMetadataOperation extends DeltaLogging {
           description = description,
           schemaString = dataSchema.json,
           partitionColumns = normalizedPartitionCols,
-          configuration = cleanedConfs
-          ,
+          bucketSpec = bucketSpec,
+          configuration = cleanedConfs,
           createdTime = Some(System.currentTimeMillis())))
     } else if (isOverwriteMode && canOverwriteSchema && (isNewSchema || isPartitioningChanged
         )) {

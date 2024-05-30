@@ -124,6 +124,7 @@ class RemoveColumnMappingCommand(
     txn.writeFiles(
       inputData = RowTracking.preserveRowTrackingColumns(data, txn.snapshot),
       writeOptions = Some(deltaOptions),
+      bucketSpec = None,
       isOptimize = true,
       additionalConstraints = Seq.empty)
       .asInstanceOf[Seq[AddFile]]

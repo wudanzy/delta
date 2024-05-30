@@ -445,7 +445,7 @@ class OptimizeExecutor(
       description)
 
     val binInfo = optimizeStrategy.initNewBin
-    val addFiles = txn.writeFiles(repartitionDF, None, isOptimize = true, Nil).collect {
+    val addFiles = txn.writeFiles(repartitionDF, None, None, isOptimize = true, Nil).collect {
       case a: AddFile => optimizeStrategy.tagAddFile(a, binInfo)
       case other =>
         throw new IllegalStateException(

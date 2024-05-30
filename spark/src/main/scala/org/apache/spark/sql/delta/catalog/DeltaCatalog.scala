@@ -432,9 +432,6 @@ class DeltaCatalog extends DelegatingCatalogExtension
       tableDesc: CatalogTable,
       query: Option[LogicalPlan],
       maybeClusterBySpec: Option[ClusterBySpec] = None): CatalogTable = {
-    if (tableDesc.bucketSpec.isDefined) {
-      throw DeltaErrors.operationNotSupportedException("Bucketing", tableDesc.identifier)
-    }
 
     val schema = query.map { plan =>
       assert(tableDesc.schema.isEmpty, "Can't specify table schema in CTAS.")
