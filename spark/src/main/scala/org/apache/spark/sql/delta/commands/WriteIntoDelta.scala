@@ -310,7 +310,7 @@ case class WriteIntoDelta(
         (newFiles, addFiles, deletedFiles)
       case _ =>
         val newFiles = writeFiles(
-          txn, data, options
+          txn, data, options, bucketSpec
         )
         (newFiles, newFiles.collect { case a: AddFile => a }, Nil)
     }
@@ -348,7 +348,7 @@ case class WriteIntoDelta(
       options: DeltaOptions,
       bucketSpec: Option[BucketSpec]
     ): Seq[FileAction] = {
-    txn.writeFiles(data, Some(options))
+    txn.writeFiles(data, Some(options), bucketSpec)
   }
 
   private def removeFiles(
