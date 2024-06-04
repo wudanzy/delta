@@ -558,7 +558,7 @@ class DeltaLog private(
 
     val fileIndex = TahoeLogFileIndex(
       spark, this, dataPath, snapshotToUse, partitionFilters, isTimeTravelQuery)
-    var bucketSpec: Option[BucketSpec] = None
+    var bucketSpec: Option[BucketSpec] = snapshotToUse.metadata.bucketSpec
 
     val r = buildHadoopFsRelationWithFileIndex(snapshotToUse, fileIndex, bucketSpec = bucketSpec)
     new HadoopFsRelation(
