@@ -151,6 +151,7 @@ class DeltaCatalog extends DelegatingCatalogExtension
         operation.mode,
         new DeltaOptions(withDb.storage.properties, spark.sessionState.conf),
         withDb.partitionColumnNames,
+        withDb.bucketSpec,
         withDb.properties ++ commentOpt.map("comment" -> _),
         df,
         schemaInCatalog = if (newSchema != schema) Some(newSchema) else None)
@@ -369,11 +370,6 @@ class DeltaCatalog extends DelegatingCatalogExtension
   def verifyTableAndSolidify(
       tableDesc: CatalogTable,
       query: Option[LogicalPlan]): CatalogTable = {
-
-    if (tableDesc.bucketSpec.isDefined) {
-      throw DeltaErrors.operationNotSupportedException("Bucketing", tableDesc.identifier)
-    }
-
     val schema = query.map { plan =>
       assert(tableDesc.schema.isEmpty, "Can't specify table schema in CTAS.")
       plan.schema.asNullable
@@ -712,9 +708,9 @@ trait SupportsPathIdentifier extends TableCatalog { self: DeltaCatalog =>
       "DeltaCatalog", "tableExists") {
     if (isPathIdentifier(ident)) {
       val path = new Path(ident.name())
-      // scalastyle:off deltahadoopconfiguration
+      // scalastyle:off hadoopconfiguration
       val fs = path.getFileSystem(spark.sessionState.newHadoopConf())
-      // scalastyle:on deltahadoopconfiguration
+      // scalastyle:on hadoopconfiguration
       fs.exists(path) && fs.listStatus(path).nonEmpty
     } else {
       super.tableExists(ident)

@@ -25,9 +25,9 @@ import org.apache.spark.sql.delta.constraints.Constraints.Check
 import org.apache.spark.sql.delta.constraints.Invariants.ArbitraryExpression
 import org.apache.spark.sql.delta.schema.{ImplicitMetadataOperation, InvariantViolationException, SchemaUtils}
 import org.apache.spark.sql.delta.sources.DeltaSQLConf
-
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.{And, Expression, Literal}
 import org.apache.spark.sql.catalyst.plans.logical.DeleteFromTable
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
@@ -74,6 +74,7 @@ case class WriteIntoDelta(
     mode: SaveMode,
     options: DeltaOptions,
     partitionColumns: Seq[String],
+    bucketSpec: Option[BucketSpec],
     configuration: Map[String, String],
     data: DataFrame,
     schemaInCatalog: Option[StructType] = None)
@@ -210,7 +211,7 @@ case class WriteIntoDelta(
     }
     val finalSchema = schemaInCatalog.getOrElse(dataSchema)
     updateMetadata(data.sparkSession, txn, finalSchema,
-      partitionColumns, configuration, isOverwriteOperation, rearrangeOnly)
+      partitionColumns, bucketSpec, configuration, isOverwriteOperation, rearrangeOnly)
 
     val replaceOnDataColsEnabled =
       sparkSession.conf.get(DeltaSQLConf.REPLACEWHERE_DATACOLUMNS_ENABLED)

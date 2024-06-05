@@ -285,6 +285,7 @@ private class WriteIntoDeltaBuilder(
             if (forceOverwrite) SaveMode.Overwrite else SaveMode.Append,
             new DeltaOptions(options.toMap, session.sessionState.conf),
             Nil,
+            log.unsafeVolatileSnapshot.metadata.bucketSpec,
             log.unsafeVolatileSnapshot.metadata.configuration,
             data).run(session)
 
