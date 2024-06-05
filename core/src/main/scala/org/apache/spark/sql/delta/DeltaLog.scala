@@ -17,18 +17,17 @@
 package org.apache.spark.sql.delta
 
 // scalastyle:off import.ordering.noEmptyLine
-import java.io.{File, IOException}
-import java.lang.ref.WeakReference
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
-
-import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.concurrent.Future
-import scala.util.Try
-import scala.util.control.NonFatal
-
 import com.databricks.spark.util.TagDefinitions._
+import com.google.common.cache.{CacheBuilder, RemovalNotification}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FileStatus, Path}
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.{Resolver, UnresolvedAttribute}
+import org.apache.spark.sql.catalyst.catalog.{BucketSpec, CatalogTable}
+import org.apache.spark.sql.catalyst.expressions.{And, Attribute, Cast, Expression, Literal}
+import org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper
+import org.apache.spark.sql.catalyst.util.FailFastMode
 import org.apache.spark.sql.delta.actions._
 import org.apache.spark.sql.delta.commands.WriteIntoDelta
 import org.apache.spark.sql.delta.commands.cdc.CDCReader
@@ -37,23 +36,20 @@ import org.apache.spark.sql.delta.metering.DeltaLogging
 import org.apache.spark.sql.delta.schema.{SchemaMergingUtils, SchemaUtils}
 import org.apache.spark.sql.delta.sources.DeltaSQLConf
 import org.apache.spark.sql.delta.storage.LogStoreProvider
-import com.google.common.cache.{CacheBuilder, RemovalNotification}
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileStatus, Path}
-
-import org.apache.spark.SparkContext
-import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.catalyst.analysis.{Resolver, UnresolvedAttribute}
-import org.apache.spark.sql.catalyst.catalog.{BucketSpec, CatalogTable}
-import org.apache.spark.sql.catalyst.expressions.{And, Attribute, Cast, Expression, Literal}
-import org.apache.spark.sql.catalyst.plans.logical.AnalysisHelper
-import org.apache.spark.sql.catalyst.util.FailFastMode
 import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.sources.{BaseRelation, InsertableRelation}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
-import org.apache.spark.util.{Clock, SystemClock, Utils}
+import org.apache.spark.util.{Clock, SystemClock}
+
+import java.io.File
+import java.lang.ref.WeakReference
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
+import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scala.util.Try
+import scala.util.control.NonFatal
 
 /**
  * Used to query the current state of the log as well as modify it by adding
@@ -458,7 +454,7 @@ class DeltaLog private(
 
     val fileIndex = TahoeLogFileIndex(
       spark, this, dataPath, snapshotToUse, partitionFilters, isTimeTravelQuery)
-    var bucketSpec: Option[BucketSpec] = None
+    var bucketSpec: Option[BucketSpec] = snapshotToUseOpt.flatMap(s => s.metadata.bucketSpec)
     new HadoopFsRelation(
       fileIndex,
       partitionSchema = DeltaColumnMapping.dropColumnMappingMetadata(
@@ -482,6 +478,7 @@ class DeltaLog private(
           mode = mode,
           new DeltaOptions(Map.empty[String, String], spark.sessionState.conf),
           partitionColumns = Seq.empty,
+          bucketSpec = bucketSpec,
           configuration = Map.empty,
           data = data).run(spark)
       }

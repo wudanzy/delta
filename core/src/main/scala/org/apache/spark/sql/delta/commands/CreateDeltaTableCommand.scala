@@ -17,20 +17,19 @@
 package org.apache.spark.sql.delta.commands
 
 // scalastyle:off import.ordering.noEmptyLine
-import org.apache.spark.sql.delta._
-import org.apache.spark.sql.delta.actions.{Action, Metadata}
-import org.apache.spark.sql.delta.metering.DeltaLogging
-import org.apache.spark.sql.delta.schema.SchemaUtils
-import org.apache.spark.sql.delta.sources.DeltaSQLConf
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.analysis.{Analyzer, CannotReplaceMissingTableException}
+import org.apache.spark.sql.catalyst.analysis.CannotReplaceMissingTableException
 import org.apache.spark.sql.catalyst.catalog.{CatalogTable, CatalogTableType}
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.connector.catalog.Identifier
+import org.apache.spark.sql.delta._
+import org.apache.spark.sql.delta.actions.Metadata
+import org.apache.spark.sql.delta.metering.DeltaLogging
+import org.apache.spark.sql.delta.schema.SchemaUtils
+import org.apache.spark.sql.delta.sources.DeltaSQLConf
 import org.apache.spark.sql.execution.command.{LeafRunnableCommand, RunnableCommand}
 import org.apache.spark.sql.types.StructType
 
@@ -156,6 +155,7 @@ case class CreateDeltaTableCommand(
               mode = mode,
               options,
               partitionColumns = table.partitionColumnNames,
+              bucketSpec = table.bucketSpec,
               configuration = tableWithLocation.properties + ("comment" -> table.comment.orNull),
               data = data).write(txn, sparkSession)
 
@@ -237,6 +237,7 @@ case class CreateDeltaTableCommand(
       description = table.comment.orNull,
       schemaString = schemaString,
       partitionColumns = table.partitionColumnNames,
+      bucketSpec = table.bucketSpec,
       configuration = table.properties,
       createdTime = Some(System.currentTimeMillis()))
   }

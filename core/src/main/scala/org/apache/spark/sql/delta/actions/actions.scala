@@ -17,30 +17,28 @@
 package org.apache.spark.sql.delta.actions
 
 // scalastyle:off import.ordering.noEmptyLine
+import com.fasterxml.jackson.annotation.{JsonIgnore, JsonInclude}
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonSerialize}
+import com.fasterxml.jackson.databind.{JsonSerializer, SerializerProvider}
+import org.apache.spark.internal.Logging
+import org.apache.spark.sql.catalyst.catalog.BucketSpec
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.apache.spark.sql.delta._
+import org.apache.spark.sql.delta.constraints.{Constraints, Invariants}
+import org.apache.spark.sql.delta.sources.DeltaSQLConf
+import org.apache.spark.sql.delta.util.JsonUtils
+import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.{Encoder, SparkSession}
+import org.apache.spark.util.Utils
+import org.codehaus.jackson.annotate.JsonRawValue
+
 import java.net.URI
 import java.sql.Timestamp
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-
 import scala.collection.mutable.ArrayBuffer
-import scala.util.control.NonFatal
-
-import org.apache.spark.sql.delta.{ColumnWithDefaultExprUtils, DeltaColumnMapping, DeltaColumnMappingMode, DeltaConfigs, DeltaErrors, DeltaThrowable, DeltaThrowableHelper, GeneratedColumn, OptimizablePartitionExpression}
-import org.apache.spark.sql.delta.constraints.{Constraints, Invariants}
-import org.apache.spark.sql.delta.sources.DeltaSQLConf
-import org.apache.spark.sql.delta.util.JsonUtils
-import com.fasterxml.jackson.annotation.{JsonIgnore, JsonIgnoreProperties, JsonInclude}
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.{JsonSerializer, ObjectMapper, SerializerProvider}
-import com.fasterxml.jackson.databind.annotation.{JsonDeserialize, JsonSerialize}
-import org.codehaus.jackson.annotate.JsonRawValue
-
-import org.apache.spark.internal.Logging
-import org.apache.spark.sql.{Encoder, SparkSession}
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{DataType, NullType, StructField, StructType}
-import org.apache.spark.util.Utils
 
 /** Thrown when the protocol version of a table is greater than supported by this client. */
 class InvalidProtocolVersionException extends RuntimeException(
@@ -442,6 +440,7 @@ case class Metadata(
     format: Format = Format(),
     schemaString: String = null,
     partitionColumns: Seq[String] = Nil,
+    bucketSpec: Option[BucketSpec] = None,
     configuration: Map[String, String] = Map.empty,
     @JsonDeserialize(contentAs = classOf[java.lang.Long])
     createdTime: Option[Long] = None) extends Action {

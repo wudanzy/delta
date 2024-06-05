@@ -16,32 +16,30 @@
 
 package org.apache.spark.sql.delta.commands
 
-import java.util.ConcurrentModificationException
-
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.collection.parallel.immutable.ParVector
-
-import org.apache.spark.sql.delta.skipping.MultiDimClustering
-import org.apache.spark.sql.delta._
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext.SPARK_JOB_GROUP_ID
+import org.apache.spark.sql.catalyst.TableIdentifier
+import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
+import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Expression}
 import org.apache.spark.sql.delta.DeltaOperations.Operation
+import org.apache.spark.sql.delta._
 import org.apache.spark.sql.delta.actions.{Action, AddFile, FileAction, RemoveFile}
 import org.apache.spark.sql.delta.commands.optimize._
 import org.apache.spark.sql.delta.files.SQLMetricsReporting
 import org.apache.spark.sql.delta.schema.SchemaUtils
+import org.apache.spark.sql.delta.skipping.MultiDimClustering
 import org.apache.spark.sql.delta.sources.DeltaSQLConf
-
-import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext.SPARK_JOB_GROUP_ID
-import org.apache.spark.sql.{AnalysisException, Encoders, Row, SparkSession}
-import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
-import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, Expression, Literal}
 import org.apache.spark.sql.execution.command.{LeafRunnableCommand, RunnableCommand}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.metric.SQLMetrics.createMetric
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{AnalysisException, Encoders, Row, SparkSession}
 import org.apache.spark.util.{SystemClock, ThreadUtils}
+
+import java.util.ConcurrentModificationException
+import scala.collection.mutable.ArrayBuffer
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.immutable.ParVector
 
 /** Base class defining abstract optimize command */
 abstract class OptimizeTableCommandBase extends RunnableCommand with DeltaCommand {

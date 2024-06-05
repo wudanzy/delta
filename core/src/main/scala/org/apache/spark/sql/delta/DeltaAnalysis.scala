@@ -19,40 +19,29 @@ package org.apache.spark.sql.delta
 import scala.collection.JavaConverters._
 
 // scalastyle:off import.ordering.noEmptyLine
-import org.apache.spark.sql.catalyst.TimeTravel
-import org.apache.spark.sql.delta.DeltaErrors.{TemporallyUnstableInputException, TimestampEarlierThanCommitRetentionException}
-import org.apache.spark.sql.delta.catalog.{DeltaCatalog, DeltaTableV2}
-import org.apache.spark.sql.delta.commands.RestoreTableCommand
-import org.apache.spark.sql.delta.commands.WriteIntoDelta
-import org.apache.spark.sql.delta.commands.cdc.CDCReader
-import org.apache.spark.sql.delta.constraints.{AddConstraint, DropConstraint}
-import org.apache.spark.sql.delta.files.{TahoeFileIndex, TahoeLogFileIndex}
-import org.apache.spark.sql.delta.metering.DeltaLogging
-import org.apache.spark.sql.delta.schema.SchemaUtils
-import org.apache.spark.sql.delta.util.AnalysisHelper
-import org.apache.hadoop.fs.Path
-
-import org.apache.spark.sql.{AnalysisException, Dataset, SaveMode, SparkSession}
-import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.TableIdentifier
-import org.apache.spark.sql.catalyst.analysis.{CannotReplaceMissingTableException, EliminateSubqueryAliases, NamedRelation, ResolvedTable, UnresolvedRelation}
-import org.apache.spark.sql.catalyst.analysis.UnresolvedTableValuedFunction
-import org.apache.spark.sql.catalyst.catalog.{CatalogStorageFormat, CatalogTable, CatalogTableType}
+import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.analysis.{EliminateSubqueryAliases, NamedRelation, UnresolvedRelation}
 import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.parser.CatalystSqlParser
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
-import org.apache.spark.sql.connector.catalog.{CatalogV2Util, Identifier}
+import org.apache.spark.sql.catalyst.{TableIdentifier, TimeTravel}
 import org.apache.spark.sql.connector.catalog.CatalogV2Implicits._
+import org.apache.spark.sql.delta.DeltaErrors.{TemporallyUnstableInputException, TimestampEarlierThanCommitRetentionException}
 import org.apache.spark.sql.delta._
+import org.apache.spark.sql.delta.catalog.DeltaTableV2
+import org.apache.spark.sql.delta.commands.cdc.CDCReader
+import org.apache.spark.sql.delta.commands.{RestoreTableCommand, WriteIntoDelta}
+import org.apache.spark.sql.delta.files.TahoeLogFileIndex
+import org.apache.spark.sql.delta.metering.DeltaLogging
+import org.apache.spark.sql.delta.schema.SchemaUtils
+import org.apache.spark.sql.delta.util.AnalysisHelper
 import org.apache.spark.sql.execution.command.RunnableCommand
 import org.apache.spark.sql.execution.datasources.LogicalRelation
 import org.apache.spark.sql.execution.datasources.v2.DataSourceV2Relation
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
-import org.apache.spark.util.Utils
 
 /**
  * Analysis rules for Delta. Currently, these rules enable schema enforcement / evolution with
@@ -519,6 +508,7 @@ case class DeltaDynamicPartitionOverwriteCommand(
       SaveMode.Overwrite,
       deltaOptions,
       partitionColumns = Nil,
+      deltaTable.deltaLog.snapshot.metadata.bucketSpec,
       deltaTable.deltaLog.snapshot.metadata.configuration,
       Dataset.ofRows(sparkSession, query)
     ).run(sparkSession)

@@ -308,7 +308,7 @@ case class MergeIntoCommand(
         if (canMergeSchema) {
           updateMetadata(
             spark, deltaTxn, migratedSchema.getOrElse(target.schema),
-            deltaTxn.metadata.partitionColumns, deltaTxn.metadata.configuration,
+            deltaTxn.metadata.partitionColumns, deltaTxn.metadata.bucketSpec, deltaTxn.metadata.configuration,
             isOverwriteMode = false, rearrangeOnly = false)
         }
 
