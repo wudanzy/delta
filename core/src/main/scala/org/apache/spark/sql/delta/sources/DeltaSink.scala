@@ -77,8 +77,8 @@ class DeltaSink(
     }
 
     // Streaming sinks can't blindly overwrite schema. See Schema Management design doc for details
-    // Streaming sinks does not support bucketing
-    updateMetadata(data.sparkSession, txn, data.schema, partitionColumns, None, Map.empty,
+    updateMetadata(data.sparkSession, txn, data.schema,
+      partitionColumns, txn.metadata.bucketSpec, Map.empty,
       outputMode == OutputMode.Complete(), rearrangeOnly = false)
 
     val currentVersion = txn.txnVersion(queryId)

@@ -22,7 +22,16 @@ import scala.util.{Failure, Success, Try}
 
 // scalastyle:off import.ordering.noEmptyLine
 import com.databricks.spark.util.DatabricksLogging
+import org.apache.spark.sql.delta._
+import org.apache.spark.sql.delta.catalog.DeltaTableV2
+import org.apache.spark.sql.delta.commands.WriteIntoDelta
+import org.apache.spark.sql.delta.commands.cdc.CDCReader
+import org.apache.spark.sql.delta.metering.DeltaLogging
+import org.apache.spark.sql.delta.util.PartitionUtils
 import org.apache.hadoop.fs.Path
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.analysis.UnresolvedAttribute
 import org.apache.spark.sql.catalyst.expressions.{EqualTo, Expression, Literal}
@@ -30,19 +39,11 @@ import org.apache.spark.sql.catalyst.plans.logical.SubqueryAlias
 import org.apache.spark.sql.catalyst.util.CaseInsensitiveMap
 import org.apache.spark.sql.connector.catalog.{Table, TableProvider}
 import org.apache.spark.sql.connector.expressions.Transform
-import org.apache.spark.sql.delta._
-import org.apache.spark.sql.delta.catalog.DeltaTableV2
-import org.apache.spark.sql.delta.commands.WriteIntoDelta
-import org.apache.spark.sql.delta.commands.cdc.CDCReader
-import org.apache.spark.sql.delta.metering.DeltaLogging
-import org.apache.spark.sql.delta.util.PartitionUtils
 import org.apache.spark.sql.execution.streaming.{Sink, Source}
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
 
 /** A DataSource V1 for integrating Delta into Spark SQL batch and Streaming APIs. */
 class DeltaDataSource
@@ -165,7 +166,7 @@ class DeltaDataSource
       mode = mode,
       new DeltaOptions(parameters, sqlContext.sparkSession.sessionState.conf),
       partitionColumns = partitionColumns,
-      bucketSpec = None,
+      bucketSpec = deltaLog.unsafeVolatileSnapshot.metadata.bucketSpec,
       configuration = DeltaConfigs.validateConfigurations(
         parameters.filterKeys(_.startsWith("delta.")).toMap),
       data = data).run(sqlContext.sparkSession)

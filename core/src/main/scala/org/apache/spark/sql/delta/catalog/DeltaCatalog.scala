@@ -708,9 +708,9 @@ trait SupportsPathIdentifier extends TableCatalog { self: DeltaCatalog =>
       "DeltaCatalog", "tableExists") {
     if (isPathIdentifier(ident)) {
       val path = new Path(ident.name())
-      // scalastyle:off hadoopconfiguration
+      // scalastyle:off deltahadoopconfiguration
       val fs = path.getFileSystem(spark.sessionState.newHadoopConf())
-      // scalastyle:on hadoopconfiguration
+      // scalastyle:on deltahadoopconfiguration
       fs.exists(path) && fs.listStatus(path).nonEmpty
     } else {
       super.tableExists(ident)

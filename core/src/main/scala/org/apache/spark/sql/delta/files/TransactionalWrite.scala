@@ -16,11 +16,10 @@
 
 package org.apache.spark.sql.delta.files
 
-import org.apache.commons.lang3.exception.ExceptionUtils
-import org.apache.hadoop.fs.Path
-import org.apache.spark.SparkException
-import org.apache.spark.sql.catalyst.expressions._
-import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
+import java.net.URI
+
+import scala.collection.mutable.ListBuffer
+
 import org.apache.spark.sql.delta._
 import org.apache.spark.sql.delta.actions._
 import org.apache.spark.sql.delta.commands.cdc.CDCReader
@@ -29,15 +28,18 @@ import org.apache.spark.sql.delta.metering.DeltaLogging
 import org.apache.spark.sql.delta.schema._
 import org.apache.spark.sql.delta.sources.DeltaSQLConf
 import org.apache.spark.sql.delta.stats.{DeltaJobStatisticsTracker, StatisticsCollection}
+import org.apache.commons.lang3.exception.ExceptionUtils
+import org.apache.hadoop.fs.Path
+
+import org.apache.spark.SparkException
+import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans.logical.LocalRelation
 import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.datasources.{BasicWriteJobStatsTracker, FileFormatWriter, WriteJobStatsTracker}
 import org.apache.spark.sql.functions.{col, to_json}
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.util.SerializableConfiguration
-
-import java.net.URI
-import scala.collection.mutable.ListBuffer
 
 /**
  * Adds the ability to write files out as part of a transaction. Checks
